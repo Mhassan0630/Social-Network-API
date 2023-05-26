@@ -1,95 +1,107 @@
-const { Thought, User } = require('../models/index');
+const { User, Thought } = require('../models/index');
 
-const totalThoughts = async () =>
+// Counts all the thoughts
+const thoughtCount = async () =>
     Thought.aggregate()
-        .count('totalThoughts')
-        .then((thoughtsNum) => thoughtsNum);
+        .count('thoughtCount')
+        .then((numberOfThoughts) => numberOfThoughts);
 
 module.exports = {
-    fetchAllThoughts(req, res) {
+    // Get all thoughts
+    getThoughts(req, res) {
         Thought.find()
-            .then(async (allThoughts) => {
-                const thoughtsData = {
-                    allThoughts,
-                    totalThoughts: await totalThoughts(),
+            .then(async (thought) => {
+                const thoughtObj = {
+                    thought,
+                    thoughtCount: await thoughtCount(),
                 };
-                return res.json(thoughtsData);
+                return res.json(thoughtObj);
             })
-            .catch((error) => {
-                console.log(error);
-                return res.status(500).json(error);
+            .catch((err) => {
+                console.log(err);
+                return res.status(500).json(err);
             });
     },
-    createNewThought(req, res) {
+    // Create thought
+    createThought(req, res) {
         Thought.create(req.body)
-            .then((newThought) => {
-                const idOfThought = newThought._id;
-                const userProvidedId = req.body.userId;
-                const reactionsList = newThought.reactions;
+            .then((thought) => {
+                console.log(thought.reactions);
 
-                const userThoughtsUpdate = User.findOneAndUpdate(
-                    { _id: userProvidedId },
-                    { $push: { thoughts: idOfThought } },
+                const thoughtId = thought._id;
+                const userId = req.body.userId;
+                const reactions = thought.reactions;
+
+                const updateThoughts = User.findOneAndUpdate(
+                    { _id: userId },
+                    { $push: { thoughts: thoughtId } },
                     { new: true }
                 );
 
-                const userReactionsUpdate = User.findOneAndUpdate(
-                    { _id: userProvidedId },
-                    { $push: { reactions: { $each: reactionsList } } },
+                const updateReactions = User.findOneAndUpdate(
+                    { _id: userId },
+                    { $push: { reactions: { $each: reactions } } },
                     { new: true }
                 );
 
-                return Promise.all([userThoughtsUpdate, userReactionsUpdate]);
+                return Promise.all([updateThoughts, updateReactions]);
             })
             .then(() => {
-                res.json({ message: "New thought successfully created!" });
+                res.json({ message: "thought created!" });
             })
-            .catch((error) => res.status(500).json(error));
+            .catch((err) => res.status(500).json(err));
     },
-    fetchSingleThought(req, res) {
+    // Get single thought
+    getSingleThought(req, res) {
         Thought.findOne({ _id: req.params.thoughtId })
-            .then(async (singleThought) =>
-                !singleThought
-                    ? res.status(404).json({ message: 'No thought found with this ID' })
-                    : res.json({ singleThought })
+            .then(async (thought) =>
+                !thought
+                    ? res.status(404).json({ message: 'No user with that ID' })
+                    : res.json({
+                        thought,
+                    })
             )
-            .catch((error) => {
-                console.log(error);
-                return res.status(500).json(error);
+            .catch((err) => {
+                console.log(err);
+                return res.status(500).json(err);
             });
     },
-    modifyThought(req, res) {
-        Thought.findOneAndUpdate({ _id: req.params.thoughtId }, req.body, { new: true }, (error, updatedThought) => {
-            if (error) {
-                return res.status(400).send(error);
+    // Update thought
+    updateThought(req, res) {
+        Thought.findOneAndUpdate({ _id: req.params.thoughtId }, req.body, { new: true }, (err, thought) => {
+            if (err) {
+                return res.status(400).send(err);
             } else {
-                return res.send(updatedThought);
+                return res.send(thought);
             }
         });
     },
-    removeThought(req, res) {
+    // Delete thought
+    deleteThought(req, res) {
         Thought.findOneAndRemove({ _id: req.params.thoughtId })
-            .then((deletedThought) =>
-                !deletedThought
-                    ? res.status(404).json({ message: 'No thought found with this ID' })
-                    : res.status(200).json({ message: 'Thought has been deleted!' })
+            .then((thought) =>
+                !thought
+                    ? res.status(404).json({ message: 'No such thought exists' })
+                    : res.status(200).json({ message: 'Thought was deleted!' })
             )
     },
-    addReaction(req, res) {
-        Thought.findOneAndUpdate({ _id: req.params.thoughtId }, { $push: { reactions: req.body } }, { new: true }, (error, addedReaction) => {
-            if (error) {
-                return res.status(400).send(error);
+    // Create a reaction
+    createReaction(req, res) {
+        Thought.findOneAndUpdate({ _id: req.params.thoughtId }, { $push: { reactions: req.body } }, { new: true }, (err, reaction) => {
+            if (err) {
+                return res.status(400).send(err);
             } else {
-                return res.send(addedReaction);
+                return res.send(reaction);
             }
         });
     },
-    removeReaction(req, res) {
-        Thought.findOneAndUpdate({ _id: req.params.thoughtId }, { $pull: { reactions: { reactionId: req.body.reactionId } } }, { new: true }, (error, removedReaction) => {
-            if (error) {
-                return res.status(400).send(error);
+    // Delete a reaction 
+    deleteReaction(req, res) {
+        Thought.findOneAndUpdate({ _id: req.params.thoughtId }, { $pull: { reactions: { reactionId: req.body.reactionId } } }, { new: true }, (err, reaction) => {
+            if (err) {
+                return res.status(400).send(err);
             } else {
-                return res.send(removedReaction);
+                return res.send(reaction);
             }
         });
     }

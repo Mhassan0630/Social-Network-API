@@ -1,22 +1,33 @@
-const express = require('express');
-const thoughts = require('../../controllers/thoughtController');
+const router = require('express').Router();
+const {
+    getThoughts,
+    createThought,
+    getSingleThought,
+    updateThought,
+    deleteThought,
+    createReaction, 
+    deleteReaction
+} = require('../../controllers/thoughtController');
 
-const thoughtRoutes = express.Router();
+// GET all thoughts
+router.get('/', getThoughts)
 
-// All thought routes
-thoughtRoutes.route('/')
-    .get(thoughts.getThoughts) // GET all thoughts
-    .post(thoughts.createThought); // POST a new thought
+// POST a new thought
+router.post('/', createThought)
 
-thoughtRoutes.route('/:thoughtId')
-    .get(thoughts.getSingleThought) // GET single thought by id
-    .put(thoughts.updateThought) // PUT a thought by id
-    .delete(thoughts.deleteThought); // DELETE a single thought
+// GET single thought by id
+router.get('/:thoughtId', getSingleThought)
 
-thoughtRoutes.route('/:thoughtId/reactions')
-    .post(thoughts.createReaction); // POST a reaction to a thought
+// PUT a thought by id
+router.put('/:thoughtId', updateThought)
 
-thoughtRoutes.route('/:thoughtId/reactions')
-    .delete(thoughts.deleteReaction); // DELETE a reaction by id
+// DELETE a single thought
+router.delete('/:thoughtId', deleteThought)
 
-module.exports = thoughtRoutes;
+// POST a reaction to a thought
+router.post('/:thoughtId/reactions', createReaction)
+
+// DELETE a reaction by id
+router.delete('/:thoughtId/reactions', deleteReaction)
+
+module.exports = router;

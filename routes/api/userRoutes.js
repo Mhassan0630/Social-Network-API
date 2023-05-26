@@ -1,22 +1,33 @@
-const express = require('express');
-const userControllers = require('../../controllers/userController');
+const router = require('express').Router();
+const {
+  getUsers,
+  getSingleUser,
+  createUser,
+  deleteUser,
+  updateUser,
+  addFriend, 
+  deleteFriend
+} = require('../../controllers/userControllers');
 
-const userRoutes = express.Router();
+// GET all users
+router.get('/', getUsers);
 
-// All user routes
-userRoutes.route('/')
-    .get(userControllers.getUsers) // GET all users
-    .post(userControllers.createUser); // POST a new user
+// GET a single user by its _id and populated thought and friend data
+router.get('/:userId', getSingleUser);
 
-userRoutes.route('/:userId')
-    .get(userControllers.getSingleUser) // GET single user by id
-    .put(userControllers.updateUser) // PUT (update) a user by id
-    .delete(userControllers.deleteUser); // DELETE a single user
+// POST a new user
+router.post('/', createUser);
 
-userRoutes.route('/:userId/friends')
-    .post(userControllers.addFriend); // POST a friend to a user
+// PUT to update a user by its _id
+router.put('/:userId', updateUser);
 
-userRoutes.route('/:userId/friends/:friendsId')
-    .delete(userControllers.deleteFriend); // DELETE a friend by id
+// DELETE to remove user by its _id
+router.delete('/:userId', deleteUser);
 
-module.exports = userRoutes;
+// POST a new friend to a user's friend list
+router.post('/:userId/friends/:friendsId', addFriend)
+
+// DELETE a friend from a user's friend list
+router.delete('/:userId/friends/:friendsId', deleteFriend)
+
+module.exports = router;
